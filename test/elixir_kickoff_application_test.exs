@@ -1,7 +1,7 @@
 # test/elixir_kickoff_application_test.exs
-defmodule ElixirKickoff.ApplicationTest do
+defmodule DraconicGhoul.ApplicationTest do
   @moduledoc """
-  Tests for the ElixirKickoff.Application module.
+  Tests for the DraconicGhoul.Application module.
   """
 
   use ExUnit.Case

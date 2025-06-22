@@ -1,9 +1,9 @@
-defmodule ElixirKickoff.MixProject do
+defmodule DraconicGhoul.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :elixir_kickoff,
+      app: :dragonic_ghoul,
       version: "0.1.0",
       elixir: "~> 1.13",
       erlang: "~> 25.0",
@@ -22,7 +22,7 @@ defmodule ElixirKickoff.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {ElixirKickoff.Application, []},
+      mod: {DraconicGhoul.Application, []},
       extra_applications: [:logger]
     ]
   end
