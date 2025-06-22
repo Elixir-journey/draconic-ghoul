@@ -8,7 +8,8 @@ defmodule DraconicGhoul.Application do
   use Application
 
   def start(_type, _args) do
-    IO.puts("Elixir kickoff template is running in the container!")
+    IO.puts("Draconic Ghoul is running!")
+
     # Small delay to ensure flush
     :timer.sleep(100)
     IO.puts("Log message successfully flushed")
