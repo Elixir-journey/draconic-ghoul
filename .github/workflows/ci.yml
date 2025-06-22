@@ -64,6 +64,8 @@ jobs:
 
             - name: Run Dialyzer for type checking
               run: mix dialyzer
+              env:
+                  MIX_ENV: dev
 
             - name: Run Sobelow for security analysis
               run: mix sobelow --config
