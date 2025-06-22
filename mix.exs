@@ -3,7 +3,7 @@ defmodule DraconicGhoul.MixProject do
 
   def project do
     [
-      app: :dragonic_ghoul,
+      app: :draconic_ghoul,
       version: "0.1.0",
       elixir: "~> 1.13",
       erlang: "~> 25.0",
