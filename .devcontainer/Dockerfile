@@ -1,50 +1,42 @@
-# Builder stage
 FROM elixir:1.17-alpine AS builder
-
-ENV MIX_ENV=prod
-
-# Install dependencies for building
-RUN apk add --no-cache \
-    git curl bash openssh postgresql-client
-
-WORKDIR /app
-
-# Install Hex and Rebar
-RUN mix do local.hex --force, local.rebar --force
-
-# Copy mix files and install dependencies
-COPY mix.exs mix.lock ./
-RUN mix deps.get
-
-# Copy the rest of the application and compile
-COPY . .
-RUN mkdir -p /app/config /app/rel && mix compile
-
-# Final stage
-FROM elixir:1.17-alpine
 
 ENV MIX_ENV=dev
 ENV MIX_HOME=/root/.mix
 ENV PATH="$MIX_HOME/escripts:$PATH"
 
-# Install runtime dependencies and Zsh configuration tools
+# System dependencies for Phoenix & LiveReload
 RUN apk add --no-cache \
-    bash openssh postgresql-client \
+    git curl bash openssh postgresql-client inotify-tools build-base nodejs npm
+
+WORKDIR /workspace
+
+# Install Hex + Rebar
+RUN mix do local.hex --force, local.rebar --force
+
+# Copy mix files + install deps
+COPY mix.exs mix.lock ./
+RUN mix deps.get
+
+# Copy source code + compile
+COPY . .
+RUN mix compile
+
+# Install dev tools, runtime, and Zsh enhancements
+RUN apk add --no-cache \
+    bash openssh postgresql-client inotify-tools build-base \
     git curl zsh zsh-autosuggestions zsh-syntax-highlighting zsh-completions \
     && curl -sfL git.io/antibody | sh -s - -b /usr/local/bin
 
-WORKDIR /app
+# Copy compiled app from builder stage
+COPY --from=builder /workspace /workspace
 
-# Copy the compiled app from the builder stage
-COPY --from=builder /app /app
-
-# Install Hex and Rebar for runtime usage
+# Set up Hex + Rebar again (if using `mix` inside container)
 RUN mix do local.hex --force, local.rebar --force
 
-# Check if ~/.p10k.zsh is present; if not, use the default configuration
-RUN [ -f /root/.p10k.zsh ] || cp /app/.devcontainer/.p10k.zsh /root/.p10k.zsh
+# Powerlevel10k config (fallback if no host bind)
+RUN [ -f /root/.p10k.zsh ] || echo 'POWERLEVEL10K_CONFIG_PLACEHOLDER' > /root/.p10k.zsh
 
-# Configure Zsh with Powerlevel10k
+# Zsh setup
 RUN echo '[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh' > /root/.zshrc \
     && echo 'export ZSH_THEME="powerlevel10k/powerlevel10k"' >> /root/.zshrc \
     && echo "alias ll='ls -la'" >> /root/.zshrc \
