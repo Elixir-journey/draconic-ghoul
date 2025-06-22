@@ -1,6 +1,7 @@
 # Elixir build artifacts
 /_build
 /deps
+.elixir_ls/
 
 # Phoenix assets (if applicable)
 /assets/node_modules
