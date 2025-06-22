@@ -6,7 +6,7 @@ IO.puts("Loading your Elixir project...")
 # Import useful modules such as Eco.Query in the future.
 
 # Automatically start the application (if required for testing functionality)
-{:ok, _} = Application.ensure_all_started(:elixir_kickoff)
+{:ok, _} = Application.ensure_all_started(:draconic_ghoul)
 
 Mix.env() |> IO.inspect(label: "Environment")
 

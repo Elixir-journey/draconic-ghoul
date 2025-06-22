@@ -1,5 +1,5 @@
 {
-    "name": "Elixir Kickoff Development Container",
+    "name": "Draconic Ghoul Container",
     "build": {
       "dockerfile": "./Dockerfile",
       "context": ".."

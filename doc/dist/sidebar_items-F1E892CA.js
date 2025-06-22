@@ -1,1 +1,49 @@
-sidebarNodes={"modules":[{"id":"ElixirKickoff.Application","deprecated":false,"group":"","title":"ElixirKickoff.Application","sections":[],"nodeGroups":[{"name":"Functions","nodes":[{"id":"start/2","deprecated":false,"title":"start(type, args)","anchor":"start/2"}],"key":"functions"}]}],"extras":[{"id":"api-reference","group":"","title":"API Reference","headers":[{"id":"Modules","anchor":"modules"}]},{"id":"readme","group":"","title":"Elixir kickoff","headers":[{"id":"Features","anchor":"features"},{"id":"Getting Started","anchor":"getting-started"},{"id":"Code style &amp; editor configuration","anchor":"code-style-editor-configuration"},{"id":"Development Notes","anchor":"development-notes"},{"id":"Contributing","anchor":"contributing"}]}],"tasks":[]}
+sidebarNodes = {
+    modules: [
+        {
+            id: "DraconicGhoul.Application",
+            deprecated: false,
+            group: "",
+            title: "DraconicGhoul.Application",
+            sections: [],
+            nodeGroups: [
+                {
+                    name: "Functions",
+                    nodes: [
+                        {
+                            id: "start/2",
+                            deprecated: false,
+                            title: "start(type, args)",
+                            anchor: "start/2",
+                        },
+                    ],
+                    key: "functions",
+                },
+            ],
+        },
+    ],
+    extras: [
+        {
+            id: "api-reference",
+            group: "",
+            title: "API Reference",
+            headers: [{ id: "Modules", anchor: "modules" }],
+        },
+        {
+            id: "readme",
+            group: "",
+            title: "Elixir kickoff",
+            headers: [
+                { id: "Features", anchor: "features" },
+                { id: "Getting Started", anchor: "getting-started" },
+                {
+                    id: "Code style &amp; editor configuration",
+                    anchor: "code-style-editor-configuration",
+                },
+                { id: "Development Notes", anchor: "development-notes" },
+                { id: "Contributing", anchor: "contributing" },
+            ],
+        },
+    ],
+    tasks: [],
+};

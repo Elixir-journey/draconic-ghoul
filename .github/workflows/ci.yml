@@ -1,288 +1,117 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+env:
+    MIX_ENV: test
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          # Elixir 1.13 combinations
-          - elixir: '1.13'
-            otp: '25'
+    setup:
+        runs-on: ubuntu-latest
 
-          # Elixir 1.14 combinations
-          - elixir: '1.14'
-            otp: '25'
+        steps:
+            - name: Check out the code
+              uses: actions/checkout@v4
 
-          # Elixir 1.15 combinations
-          - elixir: '1.15'
-            otp: '25'
-          - elixir: '1.15'
-            otp: '26'
+            - name: Set up Elixir
+              uses: erlef/setup-beam@v1
+              with:
+                  elixir-version: "1.18"
+                  otp-version: "27"
 
-          # Elixir 1.16 combinations
-          - elixir: '1.16'
-            otp: '25'
-          - elixir: '1.16'
-            otp: '26'
+            - name: Install dependencies
+              run: mix deps.get
 
-          # Elixir 1.17 combinations
-          - elixir: '1.17'
-            otp: '25'
-          - elixir: '1.17'
-            otp: '26'
-          - elixir: '1.17'
-            otp: '27'
+            - name: Cache dependencies
+              uses: actions/cache@v3
+              with:
+                  path: deps
+                  key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-mix-
 
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v4
+    linting:
+        runs-on: ubuntu-latest
+        needs: setup
 
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
+        steps:
+            - name: Check out the code
+              uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: mix deps.get
+            - name: Set up Elixir
+              uses: erlef/setup-beam@v1
+              with:
+                  elixir-version: "1.18"
+                  otp-version: "27"
 
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: deps
-          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-mix-
+            - name: Install dependencies (if not cached)
+              run: mix deps.get
 
-  linting:
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        include:
-          # Elixir 1.13 combinations
-          - elixir: '1.13'
-            otp: '25'
+            - name: Run mix_audit for dependency vulnerabilities
+              run: mix deps.audit
 
-          # Elixir 1.14 combinations
-          - elixir: '1.14'
-            otp: '25'
+            - name: Run formatter check
+              run: mix format --check-formatted
 
-          # Elixir 1.15 combinations
-          - elixir: '1.15'
-            otp: '25'
-          - elixir: '1.15'
-            otp: '26'
+            - name: Run Credo for linting
+              run: mix credo --strict
 
-          # Elixir 1.16 combinations
-          - elixir: '1.16'
-            otp: '25'
-          - elixir: '1.16'
-            otp: '26'
+            - name: Run Dialyzer for type checking
+              run: mix dialyzer
+              env:
+                  MIX_ENV: dev
 
-          # Elixir 1.17 combinations
-          - elixir: '1.17'
-            otp: '25'
-          - elixir: '1.17'
-            otp: '26'
-          - elixir: '1.17'
-            otp: '27'
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v4
+            - name: Run Sobelow for security analysis
+              run: mix sobelow --config
 
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
+            - name: Cache Dialyzer PLT
+              uses: actions/cache@v3
+              with:
+                  path: _build/dev/*.plt
+                  key: ${{ runner.os }}-dialyzer-plt-${{ hashFiles('**/mix.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-dialyzer-plt-
 
-      - name: Install dependencies (if not cached)
-        run: mix deps.get
+    docker-check:
+        runs-on: ubuntu-latest
+        needs: setup
 
-      - name: Run mix_audit for dependency vulnerabilities
-        run: mix deps.audit
+        steps:
+            - name: Check out the code
+              uses: actions/checkout@v4
 
-      - name: Run formatter check
-        run: mix format --check-formatted
+            - name: Set up Elixir
+              uses: erlef/setup-beam@v1
+              with:
+                  elixir-version: "1.18"
+                  otp-version: "27"
 
-      - name: Run Credo for linting
-        run: mix credo --strict
+            - name: Build Docker Image
+              run: |
+                  docker build --rm --tag $(basename $GITHUB_REPOSITORY):latest .
 
-      - name: Run Dialyzer for type checking
-        run: mix dialyzer
-        env:
-          MIX_ENV: dev
+    testing:
+        runs-on: ubuntu-latest
+        needs: setup
 
-      - name: Run Sobelow for security analysis
-        run: mix sobelow --config
+        steps:
+            - name: Check out the code
+              uses: actions/checkout@v4
 
-      - name: Cache Dialyzer PLT
-        uses: actions/cache@v3
-        with:
-          path: _build/dev/*.plt
-          key: ${{ runner.os }}-dialyzer-plt-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-dialyzer-plt-
+            - name: Set up Elixir
+              uses: erlef/setup-beam@v1
+              with:
+                  elixir-version: "1.18"
+                  otp-version: "27"
 
-  docker-check:
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        include:
-          # Elixir 1.13 combinations
-          - elixir: '1.13'
-            otp: '25'
+            - name: Install dependencies (if not cached)
+              run: mix deps.get
 
-          # Elixir 1.14 combinations
-          - elixir: '1.14'
-            otp: '25'
-
-          # Elixir 1.15 combinations
-          - elixir: '1.15'
-            otp: '25'
-          - elixir: '1.15'
-            otp: '26'
-
-          # Elixir 1.16 combinations
-          - elixir: '1.16'
-            otp: '25'
-          - elixir: '1.16'
-            otp: '26'
-
-          # Elixir 1.17 combinations
-          - elixir: '1.17'
-            otp: '25'
-          - elixir: '1.17'
-            otp: '26'
-          - elixir: '1.17'
-            otp: '27'
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v4
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
-
-      - name: Build Docker Image
-        run: |
-          docker build --rm --tag $(basename $GITHUB_REPOSITORY):latest .
-
-  testing:
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        include:
-          # Elixir 1.13 combinations
-          - elixir: '1.13'
-            otp: '25'
-
-          # Elixir 1.14 combinations
-          - elixir: '1.14'
-            otp: '25'
-
-          # Elixir 1.15 combinations
-          - elixir: '1.15'
-            otp: '25'
-          - elixir: '1.15'
-            otp: '26'
-
-          # Elixir 1.16 combinations
-          - elixir: '1.16'
-            otp: '25'
-          - elixir: '1.16'
-            otp: '26'
-
-          # Elixir 1.17 combinations
-          - elixir: '1.17'
-            otp: '25'
-          - elixir: '1.17'
-            otp: '26'
-          - elixir: '1.17'
-            otp: '27'
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v4
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
-
-      - name: Install dependencies (if not cached)
-        run: mix deps.get
-
-      - name: Run tests
-        run: mix test
-
-  # documentation:
-  #   runs-on: ubuntu-latest
-  #   needs: [setup, testing]
-  #   steps:
-  #     - name: Check out the code
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Elixir
-  #       uses: erlef/setup-beam@v1
-  #       with:
-  #         elixir-version: '1.17'
-  #         otp-version: '27.1.2'
-
-  #     - name: Install dependencies (if not cached)
-  #       run: mix deps.get
-
-  #     - name: Cache documentation
-  #       id: cache-docs
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: doc
-  #         key: ${{ runner.os }}-docs-${{ hashFiles('mix.exs', 'lib/**/*', 'README.md') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-docs-
-
-  #     - name: Generate documentation
-  #       if: steps.cache-docs.outputs.cache-hit != 'true'
-  #       run: mix docs
-  #       env:
-  #         MIX_ENV: dev
-
-  #     - name: Upload documentation
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: documentation
-  #         path: doc/
-
-  # deploy:
-    # runs-on: ubuntu-latest
-    # needs: documentation
-    # steps:
-    #   - name: Check out the code
-    #     uses: actions/checkout@v4
-
-    #   - name: Configure Git User Identity
-    #     run: |
-    #       git config --global user.name "GitHub Actions"
-    #       git config --global user.email "actions@github.com"
-
-    #   - name: Deploy to GitHub Pages
-    #     env:
-    #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #     run: |
-    #       git add doc/
-    #       git commit -m "Update documentation [skip ci]" || echo "No changes to commit"
-    #       git push origin ${{ github.head_ref || github.ref_name }}
+            - name: Run tests
+              run: mix test
